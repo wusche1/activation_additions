@@ -32,19 +32,10 @@ import pandas as pd
 def conditional_perplexity(
     model: HookedTransformer,
     prompt_tokens: torch.Tensor,
-    completion_tokens: torch.Tensor,
-    ActAds: Optional[List[ActivationAddition]] = None
+    completion_tokens: torch.Tensor
 ) -> float:
-    if ActAds==None:
-        metric_func=metrics.get_logprob_metric(model)
-    else:
-        hook_fns=hook_utils.hook_fns_from_activation_additions(model, ActAds)
-        metric_func=metrics.get_logprob_metric(model, p_funcs=(
-                    partial(hook_utils.add_hooks_from_dict, hook_fns=hook_fns)
-                    ,lambda arg1, arg2: hook_utils.remove_and_return_hooks(arg1)
-                ))
     completed_tokens=torch.cat((prompt_tokens, completion_tokens), dim=1)
-    metric=metric_func([completed_tokens])
+    model.forward(model.to_tokens("The end."))
     completion_logprobs=metric["logprob_actual_next_token"].array[0][-completion_tokens.shape[1]:]
     return -sum(completion_logprobs)
 
