@@ -29,13 +29,24 @@ _ = torch.set_grad_enabled(False)
 from typing import List, Union,Dict
 import pandas as pd
 
+def add_actads_to_model(model: HookedTransformer,
+                        ActAds: List[ActivationAddition]
+                        ):
+    hook_fns=hook_utils.hook_fns_from_activation_additions(model, ActAds)
+    for act_name in hook_fns.keys():
+        for hook_fn in hook_fns[act_name]:
+            model.add_hook(act_name, hook_fn)
+    return
+    
+
 def conditional_perplexity(
     model: HookedTransformer,
     prompt_tokens: torch.Tensor,
     completion_tokens: torch.Tensor
 ) -> float:
     completed_tokens=torch.cat((prompt_tokens, completion_tokens), dim=1)
-    model.forward(model.to_tokens("The end."))
+    metric_func=metrics.get_logprob_metric(model)
+    metric=metric_func([completed_tokens])
     completion_logprobs=metric["logprob_actual_next_token"].array[0][-completion_tokens.shape[1]:]
     return -sum(completion_logprobs)
 
@@ -45,16 +56,12 @@ def completion_perplexities(
     prompt_tokens: List[torch.Tensor],
     wanted_completion_tokens: List[torch.Tensor],
     unwanted_completion_tokens: List[torch.Tensor],
-    weighted_steering_prompts: Dict[str, float],
-    layer: int,
-    coefficient: float
+    ActAds: List[ActivationAddition]
 ) -> Tuple[List[float], List[float]]:
-    ActAds =[prompt_utils.ActivationAddition(
-                coeff=prompt_weighting*coefficient,
-                act_name=layer,
-                prompt=prompt) for prompt, prompt_weighting in weighted_steering_prompts.items()]
-    perplexity_on_wanted=[conditional_perplexity(model, prompt, completion,ActAds) for prompt, completion in zip(prompt_tokens, wanted_completion_tokens)]
-    perplexity_on_unwanted=[conditional_perplexity(model, prompt, completion,ActAds) for prompt, completion in zip(prompt_tokens, unwanted_completion_tokens)]
+    add_actads_to_model(model,ActAds)
+    perplexity_on_wanted=[conditional_perplexity(model, prompt, completion) for prompt, completion in zip(prompt_tokens, wanted_completion_tokens)]
+    perplexity_on_unwanted=[conditional_perplexity(model, prompt, completion) for prompt, completion in zip(prompt_tokens, unwanted_completion_tokens)]
+    model.remove_all_hook_fns()
 
 
     return (perplexity_on_wanted, perplexity_on_unwanted)
@@ -81,14 +88,16 @@ def layer_coefficient_gridsearch(
 
     for layer in Layer_list:
         for coefficient in coefficient_list:
+            ActAds =[prompt_utils.ActivationAddition(
+                coeff=prompt_weighting*coefficient,
+                act_name=layer,
+                prompt=prompt) for prompt, prompt_weighting in weighted_steering_prompts.items()]
 
             perplexity_on_wanted,perplexity_on_unwanted=completion_perplexities(model,
                             prompt_tokens,
                             wanted_completion_tokens,
                             unwanted_completion_tokens,
-                            weighted_steering_prompts,
-                            layer,
-                            coefficient)
+                            ActAds)
             
             # Append data for this layer and coefficient to the lists
             layer_data.extend([layer] * len(prompts))
