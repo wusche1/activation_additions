@@ -12,8 +12,8 @@ from activation_additions import (
     prompt_utils,
     completion_utils,
     utils,
-    logging,
 )
+import activation_additions.loggingsupport as logging
 
 utils.enable_ipython_reload()
 

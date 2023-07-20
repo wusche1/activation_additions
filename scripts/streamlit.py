@@ -7,9 +7,9 @@ from activation_additions.streamlit import (
     completions,
     visualization,
     stats,
-    logging,
     sidebar,
 )
+import activation_additions.loggingsupport as logging
 
 # Reset imports NOTE remove if not necessary
 import importlib

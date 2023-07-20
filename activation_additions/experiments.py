@@ -16,9 +16,9 @@ from activation_additions import (
     prompt_utils,
     metrics,
     sweeps,
-    logits,
-    logging,
+    logits
 )
+import activation_additions.loggingsupport as logging
 
 
 @logging.loggable

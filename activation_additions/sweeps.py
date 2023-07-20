@@ -12,7 +12,8 @@ import plotly.graph_objects as go
 from tqdm.auto import tqdm
 from transformer_lens import HookedTransformer
 
-from activation_additions import metrics, logging, hook_utils
+from activation_additions import metrics, hook_utils
+import activation_additions.loggingsupport as logging
 from activation_additions.prompt_utils import ActivationAddition
 from activation_additions.completion_utils import (
     gen_using_hooks,

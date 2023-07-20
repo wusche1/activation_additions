@@ -5,9 +5,8 @@ import pytest
 
 import pandas as pd
 from transformer_lens import HookedTransformer
-
+import activation_additions.loggingsupport as logging
 from activation_additions import (
-    logging,
     completion_utils,
     prompt_utils,
     utils,

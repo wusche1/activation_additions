@@ -21,9 +21,7 @@ from jaxtyping import Int
 from transformer_lens import HookedTransformer
 from transformer_lens.utils import lm_cross_entropy_loss
 
-TextMetricFunc = Callable[
-    [Iterable[str], bool, Optional[pd.Index]], pd.DataFrame
-]
+TextMetricFunc = Callable[[Iterable[str], bool, Optional[pd.Index]], pd.DataFrame]
 TokensMetricFunc = Callable[
     [Iterable[Int[torch.Tensor, "batch pos"]], bool, Optional[pd.Index]],
     pd.DataFrame,
@@ -34,9 +32,7 @@ TokensMetricFunc = Callable[
 # (False positive since we don't mutate the default value)
 def add_metric_cols(
     data: pd.DataFrame,
-    metrics_dict: Union[
-        Dict[str, TextMetricFunc], Dict[str, TokensMetricFunc]
-    ],
+    metrics_dict: Union[Dict[str, TextMetricFunc], Dict[str, TokensMetricFunc]],
     cols_to_use: Optional[Union[str, List[str]]] = None,
     show_progress: bool = False,
     prefix_cols: bool = True,
@@ -199,11 +195,7 @@ def get_logprob_metric(
                 )
             if "full" in agg_mode:
                 values["logprob_full"] = (
-                    F.log_softmax(logits, dim=-1)
-                    .detach()
-                    .cpu()
-                    .numpy()
-                    .squeeze()
+                    F.log_softmax(logits, dim=-1).detach().cpu().numpy().squeeze()
                 )
             if "kl_div" in agg_mode:
                 # Calculate KL div explicitly to avoid scipy dependency
@@ -361,8 +353,7 @@ def get_openai_metric(
             response = openai.Completion.create(
                 model=model_name,
                 prompt=[
-                    f"{ctx}\n\n{criterion.title()} rating (1-5):"
-                    for ctx in contexts
+                    f"{ctx}\n\n{criterion.title()} rating (1-5):" for ctx in contexts
                 ],
                 temperature=0.0,
                 max_tokens=1,
@@ -375,8 +366,6 @@ def get_openai_metric(
             reasoning.extend(chunk_reasoning)
 
         # Return dataframe with ratings and reasoning
-        return pd.DataFrame(
-            {"rating": ratings, "reasoning": reasoning}, index=index
-        )
+        return pd.DataFrame({"rating": ratings, "reasoning": reasoning}, index=index)
 
     return metric_func
