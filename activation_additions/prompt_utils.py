@@ -34,6 +34,7 @@ class ActivationAddition:
     act_name: str
     prompt: str
     tokens: Int[torch.Tensor, "seq"]
+    spread_coeff: float = 0.0
 
     def __init__(
         self,

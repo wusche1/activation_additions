@@ -32,10 +32,17 @@ def get_completions(**kwargs) -> str:
     stdout_capture = io.StringIO()
     sys.stdout = stdout_capture
 
+    print("activation addition:", kwargs["act_adds"])
+    print("addition location:", kwargs["addition_location"])
+
+    print("remove_eos:", kwargs["remove_eos"])
+
+
     completion_utils.print_n_comparisons(
         model=st.session_state.model,
         activation_additions=kwargs["act_adds"],
         addition_location=kwargs["addition_location"],
+        spread_coeff=kwargs["spread_coeff"],
         remove_eos=kwargs["remove_eos"],
         prompt=kwargs["prompt"],
         num_comparisons=kwargs["num_comparisons"],
@@ -96,6 +103,7 @@ def completion_generation(run: Optional[run_type] = None) -> None:
         model=str(st.session_state.model),
         act_adds=st.session_state.flat_adds,
         addition_location=st.session_state.addition_location,
+        spread_coeff=st.session_state.spread_coeff,
         remove_eos=st.session_state.remove_eos,
         prompt=st.session_state.prompt,
         num_comparisons=num_comparisons,

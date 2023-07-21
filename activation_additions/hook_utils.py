@@ -6,6 +6,9 @@ from jaxtyping import Float, Int
 import torch
 from einops import reduce
 
+from einops import repeat
+
+
 from transformer_lens import ActivationCache
 from transformer_lens.HookedTransformer import HookedTransformer, Loss
 from transformer_lens.hook_points import HookPoint, LensHandle
@@ -170,6 +173,7 @@ def hook_fn_from_activations(
     addition_location: int = 0,
     res_stream_slice: slice = slice(None),
     remove_eos: bool = False,
+    spread_coeff: float = 0.0,
 ) -> Callable:
     """Takes an activation tensor and returns a hook function that adds the
     cached activations for that prompt to the existing activations at
@@ -244,6 +248,18 @@ def hook_fn_from_activations(
         stream[indexing_operation] = (
             activations[:, :, res_stream_slice] + stream[indexing_operation]
         )
+
+        times_to_spread_right = (prompt_seq_len - (addition_location + activations_seq_len)) // activations_seq_len
+        times_to_spread_left = addition_location // activations_seq_len
+
+        right_vec = repeat(activations[:, :, res_stream_slice], 'b s d -> b (t s) d', t=times_to_spread_right)
+
+        left_vec = repeat(activations[:, :, res_stream_slice], 'b s d -> b (t s) d', t=times_to_spread_left)
+        
+        stream[:, addition_location + activations_seq_len:addition_location + activations_seq_len + times_to_spread_right * activations_seq_len, res_stream_slice] += spread_coeff * right_vec
+
+        stream[:, addition_location - times_to_spread_left * activations_seq_len:addition_location, res_stream_slice] += spread_coeff * left_vec
+        
         return stream
 
     return prompt_hook

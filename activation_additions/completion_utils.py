@@ -213,6 +213,7 @@ def gen_using_activation_additions(
     addition_location: int = 0,
     res_stream_slice: slice = slice(None),
     remove_eos: bool = False,
+    spread_coeff: float = 0.0,
     **kwargs,
 ) -> pd.DataFrame:
     """Generate completions using the given ActivationAdditions.
@@ -245,9 +246,7 @@ def gen_using_activation_additions(
                 `loss`: The average loss per token of the completions.
     """
     # Create the hook functions
-    for act_add in activation_additions:
-        print("Name", act_add.act_name)
-
+    
     hook_fns: Dict[str, List[Callable]] = (
         hook_utils.hook_fns_from_activation_additions(
             model=model,
@@ -373,6 +372,7 @@ def print_n_comparisons(
     addition_location: int = 0,
     res_stream_slice: slice = slice(None),
     remove_eos: bool = False,
+    spread_coeff: float = 0.0,
     **kwargs,
 ) -> None:
     """Pretty-print generations from `model` using the appropriate hook
@@ -404,6 +404,11 @@ def print_n_comparisons(
         `gen_using_hooks`.
     """
 
+    print("activation addition:", activation_additions)
+    print("addition location:", addition_location)
+
+    print("remove_eos:", remove_eos)
+
     assert num_comparisons > 0, "num_comparisons must be positive"
 
     prompt_batch: List[str] = [prompt] * num_comparisons
@@ -423,6 +428,7 @@ def print_n_comparisons(
             addition_location=addition_location,
             res_stream_slice=res_stream_slice,
             remove_eos=remove_eos,
+            spread_coeff=spread_coeff / activation_additions[0].coeff,
             **kwargs,
         )
         data_frames.append(mod_df)

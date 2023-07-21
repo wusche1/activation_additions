@@ -91,6 +91,8 @@ def prompt_selection(run: Optional[run_type] = None):
         run.config.update({"prompt": prompt})
 
 
+
+
 def customize_activation_additions(run: Optional[run_type] = None):
     prompt_length = len(st.session_state.prompt_str_tokens)
     st.subheader("Activation additions")
@@ -102,6 +104,9 @@ def customize_activation_additions(run: Optional[run_type] = None):
 
     if "remove_eos" not in st.session_state:
         st.session_state.remove_eos = False
+    
+    if "spread_coeff" not in st.session_state:
+        st.session_state.spread_coeff = 0.0
 
     act_adds = st.session_state.activation_adds
 
@@ -178,11 +183,17 @@ def customize_activation_additions(run: Optional[run_type] = None):
             key=f"location {i+1}"
         )
 
-        st.session_state.remove_EOS: bool = st.checkbox(
+        st.session_state.remove_eos: bool = st.checkbox(
             f"Remove EOS token", 
             value=False,
             key=f"remove EOS {i+1}"
             )
+
+        st.session_state.spread_coeff: float = st.number_input(
+            "Spread coefficient",
+            value=0.0,
+            key=f"spread coeff {i+1}"
+        )
 
         activation_adds = prompt_utils.get_x_vector(
             act_prompt_1,
