@@ -47,12 +47,9 @@ def load_model_tl(model_name: str, device: str = "cpu") -> HookedTransformer:
     return model
 
 
-
 # Save memory by not computing gradients
 _ = torch.set_grad_enabled(False)
 torch.manual_seed(0)  # For reproducibility
-
-
 
 
 def model_selection(run: Optional[run_type] = None):
@@ -60,20 +57,31 @@ def model_selection(run: Optional[run_type] = None):
 
     model_name = st.selectbox(
         "Model",
-        ["gpt2-small", "gpt2-medium", "gpt2-large", "gpt2-xl", "llama-7b", "llama-13b", "llama-30b", "llama-65b"],
+        [
+            "gpt2-small",
+            "gpt2-medium",
+            "gpt2-large",
+            "gpt2-xl",
+            "llama-7b",
+            "llama-13b",
+            "llama-30b",
+            "llama-65b",
+        ],
     )
     # Load the GPT-2 model
-    if 'model' not in st.session_state or 'model_name' not in st.session_state or model_name != st.session_state.model_name:
+    if (
+        "model" not in st.session_state
+        or "model_name" not in st.session_state
+        or model_name != st.session_state.model_name
+    ):
         # Load the GPT-2 model
         model = load_model_tl(model_name=model_name, device="cuda")  # type: ignore
         st.session_state.model = model
         st.session_state.model_name = model_name  # store the model name
         print("Model:", st.session_state.model)
 
-
     if run is not None:
-        run.config.update({"model_name": model_name}) 
-
+        run.config.update({"model_name": model_name})
 
 
 def prompt_selection(run: Optional[run_type] = None):
@@ -91,8 +99,6 @@ def prompt_selection(run: Optional[run_type] = None):
         run.config.update({"prompt": prompt})
 
 
-
-
 def customize_activation_additions(run: Optional[run_type] = None):
     prompt_length = len(st.session_state.prompt_str_tokens)
     st.subheader("Activation additions")
@@ -104,7 +110,7 @@ def customize_activation_additions(run: Optional[run_type] = None):
 
     if "remove_eos" not in st.session_state:
         st.session_state.remove_eos = False
-    
+
     if "spread_coeff" not in st.session_state:
         st.session_state.spread_coeff = 0.0
 
@@ -147,14 +153,13 @@ def customize_activation_additions(run: Optional[run_type] = None):
                     "coeff": act_adds[i][0].coeff,
                 }
             )
-        
+
         act_prompt_1 = st.text_input(
             f"Prompt 1", value=pair_params["prompt_1"], key=f"prompt 1 {i+1}"
         )
         act_prompt_2 = st.text_input(
             f"Prompt 2", value=pair_params["prompt_2"], key=f"prompt 2 {i+1}"
         )
-
 
         addition_layer: int = st.slider(
             f"Injection site",
@@ -168,9 +173,9 @@ def customize_activation_additions(run: Optional[run_type] = None):
             "Addition type",
             ["resid_pre", "attn_out", "mlp_out", "resid_post"],
             index=0,
-            key=f"type {i+1}"
-            )
-        
+            key=f"type {i+1}",
+        )
+
         coefficient = st.number_input(
             f"Coefficient", value=pair_params["coeff"], key=f"coeff {i+1}"
         )
@@ -180,19 +185,15 @@ def customize_activation_additions(run: Optional[run_type] = None):
             min_value=0,
             max_value=prompt_length,
             value=0,
-            key=f"location {i+1}"
+            key=f"location {i+1}",
         )
 
         st.session_state.remove_eos: bool = st.checkbox(
-            f"Remove EOS token", 
-            value=False,
-            key=f"remove EOS {i+1}"
-            )
+            f"Remove EOS token", value=False, key=f"remove EOS {i+1}"
+        )
 
         st.session_state.spread_coeff: float = st.number_input(
-            "Spread coefficient",
-            value=0.0,
-            key=f"spread coeff {i+1}"
+            f"Spread coefficient", value=0.0, key=f"spread coeff {i+1}"
         )
 
         activation_adds = prompt_utils.get_x_vector(
@@ -212,9 +213,7 @@ def customize_activation_additions(run: Optional[run_type] = None):
     # NOTE if the user modifies the global values before another
     # execution is finished, other runs will be affected
     st.session_state.flat_adds = [
-        item
-        for sublist in st.session_state.activation_adds
-        for item in sublist
+        item for sublist in st.session_state.activation_adds for item in sublist
     ]  # Flatten list of lists
 
     if run is not None:

@@ -37,7 +37,6 @@ def get_completions(**kwargs) -> str:
 
     print("remove_eos:", kwargs["remove_eos"])
 
-
     completion_utils.print_n_comparisons(
         model=st.session_state.model,
         activation_additions=kwargs["act_adds"],
@@ -75,9 +74,7 @@ def completion_generation(run: Optional[run_type] = None) -> None:
         "Frequency penalty", min_value=0.0, max_value=2.0, value=1.0
     )
     top_p = st.slider("Top-p", min_value=0.0, max_value=1.0, value=0.3)
-    num_comparisons = st.slider(
-        "Number of completions", min_value=1, value=5, step=1
-    )
+    num_comparisons = st.slider("Number of completions", min_value=1, value=5, step=1)
     seed = st.number_input("Random seed", value=0, step=1)
     tokens_to_generate = st.number_input(
         "Tokens to generate", min_value=0, value=50, step=1
