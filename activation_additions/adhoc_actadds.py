@@ -17,21 +17,19 @@ class SteeringVector:
 
     def add_entry(
         self,
-        tokenizetr: LlamaTokenizer,
         prompt: str,
         layer: int,
+        sub_stream: str,
         coefficient: float,
-        sub_stream: str="residual_stream",
         location: int=0,
         spread_coeff: float=0,
         remove_EOS: bool=True,
     ):
         entry = {
             "prompt": prompt,
-            "tokens": tokenizer(prompt, return_tensors="pt")["input_ids"],
             "layer": layer,
-            "sub_stream": sub_stream,
             "coefficient": coefficient,
+            "sub_stream": sub_stream,
             "location": location,
             "spread_coeff": spread_coeff,
             "remove_EOS": remove_EOS,
@@ -343,5 +341,6 @@ def get_resid_pre(model, tokenizer, prompt: str, layer_num: int):
     """Get residual stream activations for a prompt, just before a layer."""
     # TODO: Automatic addition padding.
     with residual_stream(model, layers=[layer_num]) as unmodified_streams:
-        model(**tokenize(tokenizer, prompt))
+        tokens=tokenize(tokenizer, prompt).to(model.device)
+        model(**tokens)
     return unmodified_streams[layer_num]

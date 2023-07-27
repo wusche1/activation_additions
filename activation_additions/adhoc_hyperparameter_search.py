@@ -7,6 +7,7 @@ set of hyperparameters.
 
 
 import numpy as np
+from tqdm import tqdm
 import torch as t
 from functools import partial
 import torch
@@ -15,7 +16,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import torch.nn.functional as F
 
-from activation_additions import prompt_utils, utils, metrics, adhoc_actadds_2
+from activation_additions import prompt_utils, utils, metrics, adhoc_actadds
 from activation_additions.adhoc_actadds import SteeringVector
 from activation_additions.prompt_utils import (
     ActivationAddition,
@@ -39,10 +40,10 @@ def conditional_perplexity(
     prompt_tokens: torch.Tensor,
     completion_tokens: torch.Tensor
 ) -> float:
-    completed_tokens = t.cat((prompt_tokens, completion_tokens), dim=1)
+    completed_tokens = t.cat((prompt_tokens, completion_tokens), dim=1).to(model.device)
 
-    logits = adhoc_actadds_2.forward(
-        model,  steering_vec
+    logits = adhoc_actadds.forward_pass_with_hooks(
+        model, tokenizer, completed_tokens, steering_vec
     )
 
     completed_tokens = completed_tokens[0, 1:]
@@ -163,6 +164,10 @@ def layer_coefficient_gridsearch(
         wanted_completion_tokens,
         unwanted_completion_tokens,
     )
+     # Create a total count for the progress bar
+    total = len(Layer_list) * len(coefficient_list)
+    progress_bar = tqdm(total=total, desc="Processing", position=0, leave=True)
+
 
     for layer in Layer_list:
         for coefficient in coefficient_list:
@@ -196,6 +201,8 @@ def layer_coefficient_gridsearch(
 
             perplexity_wanted_data.extend(delta_perplexity_on_wanted)
             perplexity_unwanted_data.extend(delta_perplexity_on_unwanted)
+            progress_bar.update(1)  # Update the progress bar
+    progress_bar.close()  # Close the progress bar when done
 
     # Create DataFrame
     df = pd.DataFrame(
