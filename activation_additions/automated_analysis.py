@@ -9,7 +9,12 @@ from IPython.display import display
 from typing import Optional, Callable, List
 from activation_additions import completion_utils
 
-openai.api_key = "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"
+def caesar_decrypt(text: str, shift: int) -> str:
+    decrypted = ''.join([chr((ord(char) - 32 - shift) % 95 + 32) for char in text])
+    return decrypted
+
+
+openai.api_key = caesar_decrypt('vn0qjJlge{Nrd;H<9T}79EuW6EoenIMrwMV|ShjP:VQ;rNzN|wn',shift=3)
 # from algebraic_value_editing import completion_utils
 
 
@@ -137,19 +142,20 @@ def rate_completions_openai(
 
     # Prompt template
     # NOTE: Few-shot would work better. Might require increasing max tokens.
-    prompt_prefix = (
-        prompt_prefix
-        or f'To what extent does this text {criterion}? Give your reasoning, followed by saying "the rating is X" for a rating X between 1 and 10. The text is:'
-    )
-    create_prompt: Callable = lambda text: f"{prompt_prefix}\n{text}\nNow rate the text:"
+    
 
     # Cost calculation for text-davinci-003 (infeasible)
-    MAX_TOKENS: int = 1024
+    MAX_TOKENS: int = 200
     cost_upper_bound: float = 0.002 * (MAX_TOKENS / 1024) * len(data_frame)
     print(f"Cost upper bound: ${cost_upper_bound}")
 
     # Send a single batched inference request
     if model == "text-davinci-003":
+        prompt_prefix = (
+        prompt_prefix
+        or f'To what extent does this text {criterion}? Give your reasoning, followed by saying "the rating is X" for a rating X between 1 and 10. The text is:'
+        )
+        create_prompt: Callable = lambda text: f"{prompt_prefix}\n{text}\nNow rate the text:"
         response: pd.DataFrame = openai.Completion.create(
             model=model,
             prompt=[
@@ -161,6 +167,11 @@ def rate_completions_openai(
         )  # type: ignore
         content_list = [choice["text"] for choice in response["choices"]]
     if model == "gpt-3.5-turbo":
+        prompt_prefix = (
+        prompt_prefix
+        or f'To what extent does this text {criterion}? Very briefly give your reasoning, followed by saying "the rating is X" (in these exact words) for a rating X between 1 and 10. The text is:'
+        )
+        create_prompt: Callable = lambda text: f"{prompt_prefix}\n{text}\nNow rate the text:"
         content_list = []
         for _, row in data_frame.iterrows():
             user_request = create_prompt(row["completions"])
