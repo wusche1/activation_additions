@@ -5,7 +5,7 @@ also be plotted in a way, that makes it easy to pick out the best
 set of hyperparameters.
 """
 
-
+from tqdm import tqdm
 import numpy as np
 from functools import partial
 import torch
@@ -137,7 +137,7 @@ def completion_perplexities(
     return (perplexity_on_wanted, perplexity_on_unwanted)
 
 
-def layer_coefficient_gridsearch(
+def layer_coefficient_gridsearch_perplexity(
     model: HookedTransformer,
     prompts: Union[str, List[str]],
     weighted_steering_prompts: Dict[str, float],
@@ -196,6 +196,9 @@ def layer_coefficient_gridsearch(
     prior_perplexity_on_wanted, prior_perplexity_on_unwanted = completion_perplexities(
         model, prompt_tokens, wanted_completion_tokens, unwanted_completion_tokens, None
     )
+    total_iterations = len(Layer_list) * len(coefficient_list)
+    progress_bar = tqdm(total=total_iterations, desc="Grid Search Progress")
+
 
     for layer in Layer_list:
         for coefficient in coefficient_list:
@@ -230,6 +233,8 @@ def layer_coefficient_gridsearch(
 
             perplexity_wanted_data.extend(delta_perplexity_on_wanted)
             perplexity_unwanted_data.extend(delta_perplexity_on_unwanted)
+            progress_bar.update(1)
+    progress_bar.close()
 
     # Create DataFrame
     df = pd.DataFrame(
